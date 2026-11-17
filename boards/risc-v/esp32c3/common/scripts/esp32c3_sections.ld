@@ -265,6 +265,13 @@ SECTIONS
   .dram0.data :
   {
     . = ALIGN (16);
+
+    /* ESP-IDF 6.x bootloader reads esp_app_desc_t from the start of the
+     * first segment of the application image.  Keep the descriptor as the
+     * very first object of the first loaded section.
+     */
+
+    KEEP(*(.esp_app_desc))
     _data_start = ABSOLUTE(.);
     _sdata = ABSOLUTE(.);
     *(.data)

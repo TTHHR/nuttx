@@ -113,9 +113,12 @@
  *
  ****************************************************************************/
 
+extern void esp_app_desc_link_anchor(void);
 int esp32c3_bringup(void)
 {
   int ret;
+
+  esp_app_desc_link_anchor();
 
 #if defined(CONFIG_ESP32C3_EFUSE)
   ret = esp32c3_efuse_initialize("/dev/efuse");

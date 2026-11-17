@@ -634,4 +634,14 @@ void esp_lowsetup(void)
 #endif
 
 #endif /* !CONFIG_SUPPRESS_UART_CONFIG */
+
+#ifdef CONFIG_ESPRESSIF_USBSERIAL
+  /* The bootloader disables the USB-Serial-JTAG peripheral before jumping to
+   * the application.  It has to be re-enabled here: esp_lowputc_putc() uses
+   * esp_usbserial_write(), which spins in esp_txready() until the TX FIFO of
+   * the (otherwise unclocked) peripheral becomes writable.
+   */
+
+  esp_usbserial_early_init();
+#endif
 }

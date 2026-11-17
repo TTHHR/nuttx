@@ -96,3 +96,7 @@ SAVEconfig
 .mcp.json
 imx9-norimage.img
 config.txt
+
+# ClawdMochi build products
+/.clawdmochi-defconfig.sha256
+/partitions.csv

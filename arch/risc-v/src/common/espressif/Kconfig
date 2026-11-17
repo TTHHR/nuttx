@@ -443,9 +443,16 @@ endmenu # Espressif Log Level
 menu "Bootloader and Image Configuration"
 
 config ESPRESSIF_SIMPLE_BOOT
-	bool
+	bool "Simple boot (no ESP-IDF second stage bootloader)"
 	depends on !ESPRESSIF_BOOTLOADER_MCUBOOT
 	default y
+	---help---
+		Build a self-contained image that is flashed at offset 0x0 and
+		initializes the flash/XIP mapping by itself, without an ESP-IDF
+		second stage bootloader or a partition table.
+
+		Disable this option when NuttX is loaded as the factory
+		application at offset 0x10000 by the ESP-IDF bootloader.
 
 config ESPRESSIF_BOOTLOADER_MCUBOOT
 	bool "Enable MCUboot-bootable format"

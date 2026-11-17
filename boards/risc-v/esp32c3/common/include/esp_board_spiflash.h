@@ -68,4 +68,5 @@ int board_spiflash_init(void);
 #endif
 
 #endif /* __ASSEMBLY__ */
+
 #endif /* __BOARDS_RISCV_ESP32C3_COMMON_INCLUDE_ESP_BOARD_SPIFLASH_H */

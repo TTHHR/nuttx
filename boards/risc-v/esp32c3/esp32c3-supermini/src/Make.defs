@@ -20,7 +20,7 @@
 #
 #############################################################################
 
-CSRCS = esp32c3_boot.c esp32c3_bringup.c
+CSRCS = esp32c3_boot.c esp32c3_bringup.c esp_app_desc.c
 
 ifeq ($(CONFIG_BOARDCTL_RESET),y)
   CSRCS += esp32c3_reset.c

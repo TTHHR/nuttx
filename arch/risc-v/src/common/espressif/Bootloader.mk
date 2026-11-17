@@ -151,5 +151,16 @@ clean_bootloader:
 	$(call DELDIR,$(HALDIR))
 	$(call DELDIR,$(BOOTLOADER_SRCDIR))
 	$(call DELFILE,$(BOOTLOADER_BIN))
+else
+# NuttX is loaded by the ESP-IDF second stage bootloader (prebuilt image), so
+# there is no bootloader to build here.  The targets still have to exist
+# because CONFIG_ARCH_HAVE_BOOTLOADER is selected for the ESP chips and the
+# top-level "bootloader"/"distclean" targets invoke them unconditionally.
+
+bootloader:
+	$(Q) echo "Using the prebuilt ESP-IDF second stage bootloader."
+
+clean_bootloader:
+	@:
 endif
 endif

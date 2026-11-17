@@ -95,6 +95,10 @@
 #  include "esp_board_wlan.h"
 #endif
 
+#ifdef CONFIG_ESPRESSIF_SPIFLASH
+#  include "esp_board_spiflash.h"
+#endif
+
 #ifdef CONFIG_ESPRESSIF_BLE
 #  include "esp_ble.h"
 #endif
@@ -139,6 +143,11 @@
 int esp_bringup(void)
 {
   int ret = OK;
+
+  /* Keep the ESP-IDF application descriptor linked into the image. */
+
+  extern void esp_app_desc_link_anchor(void);
+  esp_app_desc_link_anchor();
 
 #ifdef CONFIG_FS_PROCFS
   /* Mount the procfs file system */
@@ -264,6 +273,20 @@ int esp_bringup(void)
     {
       syslog(LOG_ERR, "ERROR: Failed to initialize wireless subsystem=%d\n",
              ret);
+    }
+#endif
+
+#ifdef CONFIG_ESPRESSIF_SPIFLASH
+  /* Register the storage MTD partition and mount it (CONFIG_ESPRESSIF_*
+   * SPIFLASH_* selects the file system).  The partition is unformatted on a
+   * freshly flashed device, so a mount failure here is reported but not
+   * fatal: it can be formatted later from NSH with "mksmartfs".
+   */
+
+  ret = board_spiflash_init();
+  if (ret < 0)
+    {
+      syslog(LOG_ERR, "ERROR: Failed to initialize SPI Flash=%d\n", ret);
     }
 #endif
 

@@ -38,3 +38,25 @@ EXTRA_LIBS +=  -lbtbb -lbtdm_app
 endif
 
 CFLAGS += ${DEFINE_PREFIX}_RETARGETABLE_LOCKING
+
+# esp-hal-3rdparty's nuttx/esp32c3/include/sdkconfig.h only provides
+# CONFIG_BOOTLOADER_OFFSET_IN_FLASH and CONFIG_FREERTOS_UNICORE when
+# CONFIG_ESPRESSIF_SIMPLE_BOOT or CONFIG_ESPRESSIF_BOOTLOADER_MCUBOOT is
+# enabled, even though several unconditionally built sources depend on them:
+#
+#   - bootloader_init.c and common/espressif/esp_start.c use the bootloader
+#     offset macro;
+#   - esp_hw_support/intr_alloc.c and spi_flash/cache_utils.c select their
+#     single-core implementation with #if !CONFIG_FREERTOS_UNICORE and would
+#     otherwise reference the FreeRTOS based esp_ipc_* helpers.
+#
+# ESP32-C3 is a single core SoC and its second stage bootloader starts at
+# flash offset 0x0, so provide both macros when the ESP-IDF bootloader (and
+# not NuttX itself) is in charge of the boot process.
+
+ifneq ($(CONFIG_ESPRESSIF_SIMPLE_BOOT),y)
+ifneq ($(CONFIG_ESPRESSIF_BOOTLOADER_MCUBOOT),y)
+CFLAGS += -DCONFIG_BOOTLOADER_OFFSET_IN_FLASH=0x0000
+CFLAGS += -DCONFIG_FREERTOS_UNICORE=1
+endif
+endif

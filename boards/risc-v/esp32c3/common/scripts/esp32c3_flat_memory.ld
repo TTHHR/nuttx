@@ -79,6 +79,16 @@ MEMORY
 #elif defined (CONFIG_ESPRESSIF_SIMPLE_BOOT)
   ROM (RX) :             org = ORIGIN(ROM),
                          len = FLASH_SIZE - ORIGIN(ROM)
+#else
+  /* NuttX is linked as the factory application loaded at 0x10000 by the
+   * ESP-IDF second stage bootloader (CONFIG_ESPRESSIF_SIMPLE_BOOT and
+   * CONFIG_ESPRESSIF_BOOTLOADER_MCUBOOT are both disabled).  The origin must
+   * match the offset of the "nuttx" partition in the partition table, since
+   * it defines the load address (LMA) of the first image segment.
+   */
+
+  ROM (RX) :             org = 0x10000,
+                         len = FLASH_SIZE - 0x10000
 #endif
 
   /* Below values assume the flash cache is on, and have the blocks this

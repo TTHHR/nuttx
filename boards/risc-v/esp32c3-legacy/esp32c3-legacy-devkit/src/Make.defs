@@ -46,3 +46,7 @@ endif
 DEPPATH += --dep-path board
 VPATH += :board
 CFLAGS += ${INCDIR_PREFIX}$(TOPDIR)$(DELIM)arch$(DELIM)$(CONFIG_ARCH)$(DELIM)src$(DELIM)board$(DELIM)board
+
+CSRCS += esp_app_desc.c
+
+CSRCS += esp32c3_phy_romfix.c

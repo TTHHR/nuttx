@@ -40,7 +40,10 @@ ifeq ($(CONFIG_ESPRESSIF_BOOTLOADER_MCUBOOT),y)
 else ifeq ($(CONFIG_ESPRESSIF_SIMPLE_BOOT),y)
   ARCHSCRIPT += $(call FINDSCRIPT,$(CHIP_SERIES)_sections.ld)
 else
-  ARCHSCRIPT += $(call FINDSCRIPT,$(CHIP_SERIES)_legacy_sections.ld)
+  # Image loaded as the factory application at 0x10000 by the ESP-IDF second
+  # stage bootloader: keep the full ESP-IDF layout (XIP rom segments plus the
+  # eFuse reserved symbols required by the esp-hal-3rdparty port).
+  ARCHSCRIPT += $(call FINDSCRIPT,$(CHIP_SERIES)_sections.ld)
 endif
 
 

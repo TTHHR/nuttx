@@ -26,7 +26,21 @@
  * Included Files
  ****************************************************************************/
 
-#include_next <sys/lock.h>
+#ifndef _RETARGETABLE_LOCKING
+#define _RETARGETABLE_LOCKING 1
+#endif
+
+#ifndef _LOCK_T
+#define _LOCK_T int
+#endif
+
+#ifndef _LOCK_RECURSIVE_T
+#define _LOCK_RECURSIVE_T int
+#endif
+
+#ifndef _LOCK_INITIALIZER
+#define _LOCK_INITIALIZER 0
+#endif
 
 #ifdef _RETARGETABLE_LOCKING
 

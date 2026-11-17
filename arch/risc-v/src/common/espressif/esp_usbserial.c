@@ -475,9 +475,30 @@ static int esp_ioctl(struct file *filep, int cmd, unsigned long arg)
  *
  ****************************************************************************/
 
+void esp_usbserial_early_init(void)
+{
+  USJ_RCC_ATOMIC()
+    {
+      usb_serial_jtag_ll_enable_bus_clock(true);
+    }
+
+  usb_serial_jtag_ll_phy_set_defaults();
+}
+
 void esp_usbserial_write(char ch)
 {
-  while (!esp_txready(&g_uart_usbserial));
+  /* Bounded wait: never spin forever on the early boot path if the
+   * peripheral is not available (for instance when no USB host is attached).
+   */
 
-  esp_send(&g_uart_usbserial, ch);
+  int timeout = 100000;
+
+  while (!esp_txready(&g_uart_usbserial) && --timeout > 0)
+    {
+    }
+
+  if (timeout > 0)
+    {
+      esp_send(&g_uart_usbserial, ch);
+    }
 }

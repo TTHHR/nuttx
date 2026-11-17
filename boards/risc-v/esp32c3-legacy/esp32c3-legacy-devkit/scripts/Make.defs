@@ -58,3 +58,7 @@ LDMODULEFLAGS += -melf32lriscv
 # ELF module definitions
 
 LDELFFLAGS += -melf32lriscv
+
+LDFLAGS += --wrap=rf_init
+
+EXTRA_OBJS += $(BOARD_COMMON_DIR)$(DELIM)esp32c3_phy_romfix$(OBJEXT)

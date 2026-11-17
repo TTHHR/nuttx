@@ -27,6 +27,7 @@
 #include <nuttx/config.h>
 
 #include <sys/mount.h>
+#include <sys/stat.h>
 
 #include "inttypes.h"
 #include <stdbool.h>
@@ -164,7 +165,15 @@ static int setup_smartfs(int smartn, struct mtd_dev_s *mtd,
   char path[22];
 
   ret = smart_initialize(smartn, mtd, NULL);
-  if (ret < 0)
+  if (ret == -EEXIST)
+    {
+      /* The block driver is already registered (for instance when the flash
+       * was formatted by a previous session): just mount it.
+       */
+
+      ret = OK;
+    }
+  else if (ret < 0)
     {
       syslog(LOG_INFO, "smart_initialize failed, "
              "Trying to erase first...\n");
@@ -368,6 +377,20 @@ static int init_storage_partition(void)
     {
       syslog(LOG_ERR, "ERROR: Fail to alloc MTD partition of SPI Flash\n");
       return ERROR;
+    }
+
+  /* The mount point lives in the pseudo root file system, which is created
+   * from scratch on every boot.  Make sure it exists before mounting;
+   * otherwise nx_mount() fails with -ENOTDIR and the data partition is not
+   * available at all.
+   */
+
+  ret = mkdir(CONFIG_ESPRESSIF_SPIFLASH_FS_MOUNT_PT, 0755);
+  if (ret < 0 && errno != EEXIST)
+    {
+      syslog(LOG_ERR, "ERROR: Failed to create mount point %s: %d\n",
+             CONFIG_ESPRESSIF_SPIFLASH_FS_MOUNT_PT, errno);
+      return -errno;
     }
 
 #if defined (CONFIG_ESPRESSIF_SPIFLASH_SMARTFS)

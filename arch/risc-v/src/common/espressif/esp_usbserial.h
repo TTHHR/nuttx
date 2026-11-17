@@ -35,6 +35,12 @@
 
 extern uart_dev_t g_uart_usbserial;
 
+/* Bring up the USB-Serial-JTAG peripheral early enough to be used by
+ * esp_lowputc_send_byte() from esp_lowsetup().
+ */
+
+void esp_usbserial_early_init(void);
+
 /****************************************************************************
  * Public Functions Prototypes
  ****************************************************************************/
