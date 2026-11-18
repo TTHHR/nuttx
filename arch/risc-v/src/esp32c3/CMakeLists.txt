@@ -25,6 +25,10 @@ add_subdirectory(${CMAKE_CURRENT_SOURCE_DIR}/../common/espressif espressif)
 
 set(SRCS esp_chip_rev.c)
 
+if(CONFIG_ARCH_USE_TEXT_HEAP)
+  list(APPEND SRCS esp32c3_textheap.c)
+endif()
+
 if(CONFIG_ESPRESSIF_WIFI)
   list(APPEND SRCS esp_coex_adapter.c esp_wifi_adapter.c)
 endif()

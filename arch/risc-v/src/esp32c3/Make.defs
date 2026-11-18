@@ -25,6 +25,10 @@ include common/espressif/Make.defs
 
 CHIP_CSRCS += esp_chip_rev.c
 
+ifeq ($(CONFIG_ARCH_USE_TEXT_HEAP),y)
+CHIP_CSRCS += esp32c3_textheap.c
+endif
+
 # Wireless interfaces.
 
 ifeq ($(CONFIG_ESPRESSIF_WIFI),y)
