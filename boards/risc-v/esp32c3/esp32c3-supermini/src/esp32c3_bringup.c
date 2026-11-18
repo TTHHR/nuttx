@@ -243,14 +243,6 @@ int esp_bringup(void)
 #  endif /* CONFIG_ESPRESSIF_SPI_BITBANG */
 #endif /* CONFIG_ESPRESSIF_SPI && CONFIG_SPI_DRIVER*/
 
-#ifdef CONFIG_ESPRESSIF_SPIFLASH
-  ret = board_spiflash_init();
-  if (ret)
-    {
-      syslog(LOG_ERR, "ERROR: Failed to initialize SPI Flash\n");
-    }
-#endif
-
 #ifdef CONFIG_ESPRESSIF_TEMP
   struct esp_temp_sensor_config_t cfg = TEMPERATURE_SENSOR_CONFIG(10, 50);
 
@@ -278,15 +270,24 @@ int esp_bringup(void)
 
 #ifdef CONFIG_ESPRESSIF_SPIFLASH
   /* Register the storage MTD partition and mount it (CONFIG_ESPRESSIF_*
-   * SPIFLASH_* selects the file system).  The partition is unformatted on a
-   * freshly flashed device, so a mount failure here is reported but not
-   * fatal: it can be formatted later from NSH with "mksmartfs".
+   * SPIFLASH_* selects the file system).  A blank partition (after
+   * "erase_flash" or on a new device) is formatted automatically by the
+   * first mount attempt.
    */
 
   ret = board_spiflash_init();
   if (ret < 0)
     {
       syslog(LOG_ERR, "ERROR: Failed to initialize SPI Flash=%d\n", ret);
+    }
+  else
+    {
+      /* Make sure the mount point sub-directories exist even if the /etc
+       * ROMFS start-up script does not run.
+       */
+
+      mkdir("/data/bin", 0777);
+      mkdir("/data/scripts", 0777);
     }
 #endif
 

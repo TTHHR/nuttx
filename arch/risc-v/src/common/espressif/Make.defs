@@ -297,7 +297,7 @@ ifneq ($(USE_NXTMPDIR_ESP_REPO_DIRECTLY),y)
 	$(Q) git -C chip/$(ESP_HAL_3RDPARTY_REPO)/components/mbedtls/mbedtls reset --quiet --hard
 endif
 	$(Q) echo "Applying patches..."
-	$(Q) cd chip/$(ESP_HAL_3RDPARTY_REPO)/components/mbedtls/mbedtls && git apply ../../../nuttx/patches/components/mbedtls/mbedtls/*.patch
+	$(Q) cd chip/$(ESP_HAL_3RDPARTY_REPO)/components/mbedtls/mbedtls && for p in ../../../nuttx/patches/components/mbedtls/mbedtls/*.patch; do git apply --ignore-whitespace $$p || exit 1; done
 endif
 
 include common$(DELIM)espressif$(DELIM)Bootloader.mk

@@ -46,6 +46,13 @@
 #include <nuttx/fs/nxffs.h>
 #include <nuttx/fs/partition.h>
 
+#if defined(CONFIG_ESPRESSIF_SPIFLASH_SMARTFS)
+#  include <nuttx/fs/smart.h>
+#  include <sys/ioctl.h>
+#  include <fcntl.h>
+#  include <unistd.h>
+#endif
+
 #include "espressif/esp_spiflash.h"
 #include "espressif/esp_spiflash_mtd.h"
 
@@ -140,6 +147,77 @@ static int init_ota_partitions(void)
 #endif
 
 /****************************************************************************
+ * Name: format_smartfs
+ *
+ * Description:
+ *   Format a SMART block driver.  This is the in-kernel equivalent of the
+ *   mksmartfs utility (apps/fsutils/mksmartfs).  It is only called when a
+ *   mount failed with -ENODEV, i.e. when the partition has never been
+ *   formatted, so existing data is never destroyed by this path.
+ *
+ * Input Parameters:
+ *   path - Path of the SMART block driver, for example "/dev/smart0".
+ *
+ * Returned Value:
+ *   Zero on success; a negated errno value on failure.
+ *
+ ****************************************************************************/
+
+#if defined(CONFIG_ESPRESSIF_SPIFLASH_SMARTFS)
+static int format_smartfs(const char *path)
+{
+  struct smart_read_write_s request;
+  uint8_t type = SMARTFS_SECTOR_TYPE_DIR;
+  int fd;
+  int ret;
+
+  fd = open(path, O_RDWR);
+  if (fd < 0)
+    {
+      return -errno;
+    }
+
+  /* Erase the partition and write the low-level SMART format header.  A
+   * sector size of zero selects CONFIG_MTD_SMART_SECTOR_SIZE.
+   */
+
+  ret = ioctl(fd, BIOC_LLFORMAT, 0);
+  if (ret < 0)
+    {
+      ret = -errno;
+      goto errout;
+    }
+
+  /* Allocate and initialize the root directory sector. */
+
+  request.logsector = SMARTFS_ROOT_DIR_SECTOR;
+  request.offset    = 0;
+  request.count     = 1;
+  request.buffer    = &type;
+
+  ret = ioctl(fd, BIOC_ALLOCSECT, SMARTFS_ROOT_DIR_SECTOR);
+  if (ret != SMARTFS_ROOT_DIR_SECTOR)
+    {
+      ret = -EIO;
+      goto errout;
+    }
+
+  ret = ioctl(fd, BIOC_WRITESECT, (unsigned long)((uintptr_t)&request));
+  if (ret < 0)
+    {
+      ret = -EIO;
+      goto errout;
+    }
+
+  ret = OK;
+
+errout:
+  close(fd);
+  return ret;
+}
+#endif
+
+/****************************************************************************
  * Name: setup_smartfs
  *
  * Description:
@@ -198,16 +276,33 @@ static int setup_smartfs(int smartn, struct mtd_dev_s *mtd,
       snprintf(path, sizeof(path), "/dev/smart%d", smartn);
 
       ret = nx_mount(path, mnt_pt, "smartfs", 0, NULL);
+      if (ret == -ENODEV)
+        {
+          /* The partition has not been formatted yet.  This is the normal
+           * state after "erase_flash" or on a brand new device, because the
+           * image written by the flash script only covers the bootloader,
+           * the partition table and the NuttX application.  Format the
+           * storage partition once and retry the mount.  Other mount errors
+           * are reported as-is and never destroy the partition contents.
+           */
+
+          syslog(LOG_WARNING, "Smartfs unformatted, formatting %s\n", path);
+
+          ret = format_smartfs(path);
+          if (ret < 0)
+            {
+              syslog(LOG_ERR, "ERROR: Failed to format %s: %d\n",
+                     path, ret);
+              return ret;
+            }
+
+          ret = nx_mount(path, mnt_pt, "smartfs", 0, NULL);
+        }
+
       if (ret < 0)
         {
           syslog(LOG_ERR, "ERROR: Failed to mount the FS volume: %d\n",
                  ret);
-          if (ret == -ENODEV)
-            {
-              syslog(LOG_WARNING, "Smartfs seems unformatted. "
-                     "Did you run 'mksmartfs /dev/smart%d'?\n", smartn);
-            }
-
           return ret;
         }
     }
